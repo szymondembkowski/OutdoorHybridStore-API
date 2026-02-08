@@ -6,8 +6,8 @@ namespace WebApplication1.Services
     public interface IProductService
     {
         Task<IEnumerable<Product>> GetAllProductsAsync();
-        Task<Product> AddProductAsync(ProductCreateDto dto);
-        Task <Product?> GetProductByIdAsync(int id);
+        Task<ProductCreateDto> AddProductAsync(ProductCreateDto dto);
+        Task <ProductCreateDto> GetProductByIdAsync(int id);
 
     }
 
