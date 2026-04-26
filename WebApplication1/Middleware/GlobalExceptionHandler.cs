@@ -11,7 +11,7 @@ namespace WebApplication1.Middleware
         private readonly ILogger<GlobalExceptionHandler> _logger;
         public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
         {
-            _logger = logger; 
+            _logger = logger;
         }
 
         public async ValueTask<bool> TryHandleAsync

@@ -18,30 +18,28 @@ namespace WebApplication1.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        public async Task<IActionResult> GetAll()
         {
-            var products = await _productService.GetAllProductsAsync();
-            return Ok(products);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
-        {
-            var product = await _productService.GetProductByIdAsync(id);
-
-            if (product == null)
-            {
-                return NotFound(new { message = $"Produkt o id {id} nie istnieje." });
-            }
-            return Ok(product);
+            var data = await _productService.GetAllAsync();
+            return Ok(data);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Product>> CreateProduct(ProductCreateDto productDto)
+        public async Task<IActionResult> Create(ProductCreateDto dto)
         {
-            var createdProduct = await _productService.AddProductAsync(productDto);
-
-            return CreatedAtAction(nameof(GetProduct), new { id = createdProduct.Id }, createdProduct);
+            try
+            {
+                var createdProduct = await _productService.CreateAsync(dto);
+                return Ok(createdProduct);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
+        
     }
+
+
+
 }

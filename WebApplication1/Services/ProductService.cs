@@ -4,63 +4,39 @@ using System.Text.Json;
 using WebApplication1.Data;
 using WebApplication1.DTOs;
 using WebApplication1.Models;
+using WebApplication1.Repositories;
 
 namespace WebApplication1.Services
 {
     public class ProductService : IProductService
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<ProductService> _logger;
+        private readonly IProductRepository _productRepository;
 
-        public ProductService(ApplicationDbContext context, ILogger<ProductService> logger)
+        public ProductService(IProductRepository productRepository)
         {
-            _context = context;
-            _logger = logger;
+            _productRepository = productRepository;
         }
 
-        public async Task<IEnumerable<Product>> GetAllProductsAsync()
+        public async Task<ProductCreateDto> CreateAsync(ProductCreateDto dto)
         {
-            return await _context.Products.Include(p => p.Category).ToListAsync();
-        }
+            var category = await _productRepository.GetCategoryByNameAsync(dto.CategoryName);
 
-        public async Task<ProductCreateDto> AddProductAsync(ProductCreateDto dto)
-        {
-            _logger.LogInformation("Rozpoczynam dodawanie produktu: {ProductName} do kategorii: {CategoryName}", dto.Name, dto.CategoryName);
-
-            try
+            if (category == null)
             {
-                var category = await _context.Categories
-                    .FirstOrDefaultAsync(c => c.Name.ToLower() == dto.CategoryName.ToLower())
-                    ?? new Category { Name = dto.CategoryName };
-
-                var product = dto.Adapt<Product>();
-                product.Category = category;
-
-                _context.Products.Add(product);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Produkt {ProductName} został zapisany z ID: {ProductId}", product.Name, product.Id);
-
-                return product.Adapt<ProductCreateDto>();
+                throw new KeyNotFoundException($"Category name: '{dto.CategoryName}' not found");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Błąd podczas zapisu produktu {ProductName} do bazy danych", dto.Name);
 
-                throw;
-            }
-        }
+            var product = dto.Adapt<Product>();
+            product.CategoryId = category.Id;
 
-        public async Task<ProductCreateDto> GetProductByIdAsync(int id)
-        {
-            var product = await _context.Products
-                    .Include(p => p.Category)
-                    .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null)
-                throw new KeyNotFoundException($"Product with ID {id} not found.");
-
+            await _productRepository.AddAsync(product);
             return product.Adapt<ProductCreateDto>();
+        }
+
+        public async Task<IEnumerable<ProductReadDto>> GetAllAsync()
+        {
+            var products = await _productRepository.GetProductsAsync();
+            return products.Adapt<IEnumerable<ProductReadDto>>();
         }
     }
 }
